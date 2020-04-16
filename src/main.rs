@@ -3,6 +3,8 @@ use std::env;
 use std::fs;
 use std::path::Path;
 use std::ffi::OsStr;
+use std::fs::File;
+use std::io::Read;
 
 fn main() {
     println!("1) Unpack\n");
@@ -25,7 +27,7 @@ fn SearchPack() {
 
     let folder_fith_pack_path = &args[0];
 
-    SearchInDir(folder_fith_pack_path);
+    PackOpener(SearchInDir(folder_fith_pack_path));
 }
 
 fn ArgumentCollector() -> Vec<String> {
@@ -34,7 +36,7 @@ fn ArgumentCollector() -> Vec<String> {
     return all_args;
 }
 
-fn SearchInDir(path: &String) {
+fn SearchInDir(path: &String) -> Vec<String> {
     let dir_path = Path::new(path);
 
     let mut packs = Vec::<String>::new();
@@ -49,4 +51,16 @@ fn SearchInDir(path: &String) {
             println!("{}", one_file.path().display());
         }
     }
+
+    packs
+}
+
+ fn PackOpener(packs: Vec<String>) {
+    let mut file = File::open(&packs[0])
+        .expect("Unable to open");
+
+    let mut contents = String::new();
+    file.read_to_string(&mut contents);
+
+    println!("Here");
 }
