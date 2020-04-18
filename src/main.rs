@@ -1,10 +1,14 @@
 use std::io;
-use std::env;
+use std::io::Read;
+
+use std::fs::File;
 use std::fs;
+
 use std::path::Path;
 use std::ffi::OsStr;
-use std::fs::File;
-use std::io::Read;
+
+use std::env;
+use std::str;
 
 fn main() {
     println!("1) Unpack\n");
@@ -16,18 +20,23 @@ fn main() {
     let answer_method: u32 = answer_method.trim().parse()
         .expect("Need a number");
 
-    match answer_method {
-        1 => SearchPack(),
-        _ => println!("Please, choose from list"),
+
+    let action = match answer_method {
+        1 => true,
+        _ => false,
+    };
+
+    if action {
+        PackOpener(SearchPack());
     }
 }
 
-fn SearchPack() {
+fn SearchPack() -> Vec<String> {
     let args = ArgumentCollector();
 
     let folder_fith_pack_path = &args[0];
 
-    PackOpener(SearchInDir(folder_fith_pack_path));
+    SearchInDir(folder_fith_pack_path)
 }
 
 fn ArgumentCollector() -> Vec<String> {
@@ -55,12 +64,38 @@ fn SearchInDir(path: &String) -> Vec<String> {
     packs
 }
 
- fn PackOpener(packs: Vec<String>) {
-    let mut file = File::open(&packs[0])
+fn PackOpener(packs: Vec<String>) {
+    CheckHeaderLine(&packs[2]);   
+}
+
+fn CheckHeaderLine(one_pack_path: &String) -> bool {
+    const DN_PACK_HEADER_LINE: &str = "EyedentityGames Packing File 0.1";
+
+    let mut one_pack = File::open(one_pack_path)
         .expect("Unable to open");
 
-    let mut contents = String::new();
-    file.read_to_string(&mut contents);
+    let mut read_buffer = [0; 32];
 
-    println!("Here");
+    let can_read_header = match one_pack.read(&mut read_buffer) {
+        Ok(_) => true,
+        Err(_) => true,
+    };
+
+    if !can_read_header {
+        println!("Cannot read the pack's header!");
+        return false;
+    }
+
+    let string_from_header = match str::from_utf8(&read_buffer) {
+        Ok(v) => v,
+        Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+    };
+
+    if string_from_header != String::from(DN_PACK_HEADER_LINE) {
+        println!("This pack doesn't Dragon Nest pack or this pack damaged!");
+        return false;
+    }
+
+    println!("{}", string_from_header);
+    true
 }
